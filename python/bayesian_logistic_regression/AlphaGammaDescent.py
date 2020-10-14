@@ -152,22 +152,28 @@ class AlphaGammaDescent:
     def AlphaGammaDescent_algorithm(self, thetas, weights_init):
 
         self.eta_n = self.eta_n0
+        weights_sum = weights_init.copy()
         weights, llh, renyi_bound = self._weights_update(weights_init, thetas)
         renyi_bound_lst = [renyi_bound]
         llh_lst = [llh]
 
         n_iter = 1
-        weights_sum = weights
+        weights_sum += weights.copy()
 
         while n_iter < self.N:
             self.eta_n = self.eta_n0 / (1 + np.sqrt(n_iter))
             weights, llh, renyi_bound = self._weights_update(weights, thetas)
+
             if self.bool_average:
-                weights_sum += weights.copy()
-                weights = weights_sum.copy()/(n_iter+1)
+                weights_sum += self.eta_n * weights.copy()
+
             llh_lst.append(llh)
             renyi_bound_lst.append(renyi_bound)
             n_iter += 1
+
+        if self.bool_average:
+            weights = weights_sum.copy()
+            weights = weights / np.sum(weights)
 
         return weights, llh_lst, renyi_bound_lst
 
